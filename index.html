@@ -72,6 +72,27 @@
         letter-spacing: 0.04em;
       }
 
+      #startButton {
+        margin-top: 2rem;
+        padding: 0.7em 1.4em;
+        border: 1.5px solid currentColor;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--fg);
+        font-family: "Libre Bodoni", serif;
+        font-size: clamp(1.25rem, 4vw, 2rem);
+        letter-spacing: 0.08em;
+        cursor: pointer;
+      }
+
+      #startButton:active {
+        transform: scale(0.98);
+      }
+
+      body.running #startButton {
+        display: none;
+      }
+
       body.tacet {
         --bg: #f7f2ea;
         --fg: #15120f;
@@ -139,14 +160,17 @@
     <main>
       <h1 id="label">TACET</h1>
       <p id="time">1:00</p>
+      <button id="startButton">START</button>
       <div id="hint">one-minute tacet, then day / night cycle</div>
     </main>
 
     <script>
       const labelEl = document.getElementById("label");
       const timeEl = document.getElementById("time");
+      const startButton = document.getElementById("startButton");
 
-      const startTime = Date.now();
+      let startTime = null;
+      let timerInterval = null;
 
       function formatCountdown(ms) {
         const totalSeconds = Math.ceil(ms / 1000);
@@ -165,6 +189,13 @@
       }
 
       function updateClock() {
+        if (startTime === null) {
+          labelEl.textContent = "TACET";
+          timeEl.textContent = "1:00";
+          document.body.className = "tacet";
+          return;
+        }
+
         const elapsed = Date.now() - startTime;
 
         const tacetMs = 1 * 60 * 1000;
@@ -178,16 +209,16 @@
         if (elapsed < tacetMs) {
           label = "TACET";
           displayTime = formatCountdown(tacetMs - elapsed);
-          className = "tacet";
+          className = "tacet running";
         } else {
           const loopPosition = (elapsed - tacetMs) % loopMs;
 
           if (loopPosition < sectionMs) {
             label = "DAY";
-            className = "day";
+            className = "day running";
           } else {
             label = "NIGHT";
-            className = "night";
+            className = "night running";
           }
 
           displayTime = formatCountUp(loopPosition);
@@ -198,8 +229,20 @@
         document.body.className = className;
       }
 
+      startButton.addEventListener("click", () => {
+        startTime = Date.now();
+        document.body.className = "tacet running";
+
+        updateClock();
+
+        if (timerInterval !== null) {
+          clearInterval(timerInterval);
+        }
+
+        timerInterval = setInterval(updateClock, 250);
+      });
+
       updateClock();
-      setInterval(updateClock, 250);
     </script>
   </body>
 </html>
